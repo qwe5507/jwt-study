@@ -1,5 +1,6 @@
 package com.simson.jwt.config;
 
+import com.simson.jwt.JwtAuthenticationFilter;
 import com.simson.jwt.filter.MyFilter1;
 import com.simson.jwt.filter.MyFilter3;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(corsFilter)
                 .formLogin().disable() //jwt를 사용하기 때문에 id, password를 입력하여 접속하지 않는다.
                 .httpBasic().disable()
+                .addFilter(new JwtAuthenticationFilter(authenticationManager())) // AuthenticationManager
                 .authorizeRequests()
                 .antMatchers("/api/v1/user/**")
                 .access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
