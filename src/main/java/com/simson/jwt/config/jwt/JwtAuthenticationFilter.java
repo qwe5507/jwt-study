@@ -1,5 +1,7 @@
-package com.simson.jwt;
+package com.simson.jwt.config.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.simson.jwt.config.auth.PrincipalDetails;
 import com.simson.jwt.model.User;
@@ -16,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Date;
 
 // 스프링 시큐리티에서 UsernamePasswordAuthenticationFilter가 있음.
 // /login 요청해서 username, password 전송하면 (post) 이 필터가 동작한다.
@@ -26,6 +29,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private final AuthenticationManager authenticationManager;
 
     // /login요청을 하면 로그인 시도를 위해서 실행되는 함수
+    // Authentication 객체 만들어서 리턴 => 의존 : AuthenticationManager
+    // 인증 요청시에 실행되는 함수 => /login
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         System.out.println("JwtAuthenticationFilter : 로그인 시도중 ");
@@ -41,6 +46,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             //이게 실행될때 PrincipalDetailsService의 loadUserByUsername() 함수가 실행 된 후 정상이면 authentication이 리턴됨.
             //DB에 있는 username과 password가 일치한다는 뜻.
+                // authenticate() 함수가 호출 되면 인증 프로바이더가 유저 디테일 서비스의
+                // loadUserByUsername(토큰의 첫번째 파라메터) 를 호출하고
+                // UserDetails를 리턴받아서 토큰의 두번째 파라메터(credential)과
+                // UserDetails(DB값)의 getPassword()함수로 비교해서 동일하면
+                // Authentication 객체를 만들어서 필터체인으로 리턴해준다.
+
+                // Tip: 인증 프로바이더의 디폴트 서비스는 UserDetailsService 타입
+                // Tip: 인증 프로바이더의 디폴트 암호화 방식은 BCryptPasswordEncoder
+                // 결론은 인증 프로바이더에게 알려줄 필요가 없음.
             Authentication authentication =
                     authenticationManager.authenticate(authenticationToken);
             // 로그인이 되었다는 뜻.
@@ -65,6 +79,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         System.out.println("successfulAuthentication실행 됨 : 인증이 완료되었다는 뜻 ");
-        super.successfulAuthentication(request, response, chain, authResult);
+
+        PrincipalDetails principalDetails = (PrincipalDetails)authResult.getPrincipal();
+
+        // RSA방식은 아니고 Hash암호방식
+        String jwtToken = JWT.create()
+                .withSubject("cos토큰")
+                .withExpiresAt(new Date(System.currentTimeMillis() + (60000 * 10)))
+                .withClaim("id", principalDetails.getUser().getId())
+                .withClaim("username", principalDetails.getUser().getUsername())
+                .sign(Algorithm.HMAC512("cos"));
+
+        response.addHeader("Authorization", "Bearer " + jwtToken);
     }
 }
