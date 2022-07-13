@@ -44,9 +44,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
 
-            //이게 실행될때 PrincipalDetailsService의 loadUserByUsername() 함수가 실행 된 후 정상이면 authentication이 리턴됨.
-            //DB에 있는 username과 password가 일치한다는 뜻.
-                // authenticate() 함수가 호출 되면 인증 프로바이더가 유저 디테일 서비스의
+                //깃헙 authenticate() 함수가 호출 되면 인증 프로바이더가 유저 디테일 서비스의
                 // loadUserByUsername(토큰의 첫번째 파라메터) 를 호출하고
                 // UserDetails를 리턴받아서 토큰의 두번째 파라메터(credential)과
                 // UserDetails(DB값)의 getPassword()함수로 비교해서 동일하면
@@ -55,6 +53,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 // Tip: 인증 프로바이더의 디폴트 서비스는 UserDetailsService 타입
                 // Tip: 인증 프로바이더의 디폴트 암호화 방식은 BCryptPasswordEncoder
                 // 결론은 인증 프로바이더에게 알려줄 필요가 없음.
+            //이게 실행될때 PrincipalDetailsService의 loadUserByUsername() 함수가 실행 된 후 정상이면 authentication이 리턴됨.
+            //DB에 있는 username과 password가 일치한다는 뜻.
             Authentication authentication =
                     authenticationManager.authenticate(authenticationToken);
             // 로그인이 되었다는 뜻.
